@@ -134,35 +134,45 @@ void EulerRK4Comparison::process() {
     int stepsNum = propStepsNum.get();
     double stepSize = propStepSize.get();
 
-    dvec2 eulerPos, rk4Pos;
-
-    // Euler
-    eulerPos = startPoint;
-    Integrator::drawPoint(eulerPos, red,
-                                        indexBufferPoints.get(), vertices);
-    Integrator::drawNextPointInPolyline(eulerPos, red,
-                                        indexBufferEuler.get(), vertices);
+    std::vector<dvec2> eulerPos, rk4Pos;
+    dvec2 pos;
+    bool isGrid = false;
+    int grid = 0;
     
+    // Euler
+    pos = startPoint;
+    eulerPos.push_back(pos);
     for(int i=0; i<stepsNum; i++){
-        eulerPos = Integrator::Euler(vectorField, eulerPos, stepSize, false, false);
-        Integrator::drawPoint(eulerPos, red,
-                                        indexBufferPoints.get(), vertices);
-        Integrator::drawNextPointInPolyline(eulerPos, red,
-                                        indexBufferEuler.get(), vertices);
+        pos = Integrator::Euler(vectorField, pos, stepSize, isGrid, grid);
+        eulerPos.push_back(pos);
     }
-
+    // odd size
+    if(stepsNum%2!=0){
+        eulerPos.push_back(pos);
+    }
+    
+    for(auto i=eulerPos.begin(); i!=eulerPos.end(); i++){
+        Integrator::drawNextPointInPolyline(*i, red, indexBufferEuler.get(), vertices);
+        Integrator::drawPoint(*i, red, indexBufferPoints.get(), vertices);
+    }
+    
     // RK4
-    rk4Pos = startPoint;
-    Integrator::drawPoint(rk4Pos, blue, indexBufferPoints.get(), vertices);
-    Integrator::drawNextPointInPolyline(rk4Pos, blue, indexBufferRK.get(), vertices);
-
+    pos = startPoint;
+    rk4Pos.push_back(pos);
     for(int i=0; i<stepsNum; i++){
-        rk4Pos = Integrator::RK4(vectorField, rk4Pos, stepSize, false, false);
-        Integrator::drawPoint(rk4Pos, blue, indexBufferPoints.get(), vertices);
-        Integrator::drawNextPointInPolyline(rk4Pos, blue,
-                                        indexBufferRK.get(), vertices);
+        pos = Integrator::RK4(vectorField, pos, stepSize, isGrid, grid);
+        rk4Pos.push_back(pos);
     }
-
+    // odd size
+    if(stepsNum%2!=0){
+        rk4Pos.push_back(pos);
+    }
+    
+    for(auto i=rk4Pos.begin(); i!=rk4Pos.end(); i++){
+        Integrator::drawPoint(*i, blue, indexBufferPoints.get(), vertices);
+        Integrator::drawNextPointInPolyline(*i, blue, indexBufferRK.get(), vertices);
+    }
+     
     mesh->addVertices(vertices);
     meshOut.setData(mesh);
 }
